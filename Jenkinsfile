@@ -3,16 +3,13 @@ pipeline {
     agent any
 
     environment {
-
         IMAGE_NAME = "task-tracker-app"
         CONTAINER_NAME = "task-tracker-container"
-        PORT = "3000"
         IMAGE_TAG = "${BUILD_NUMBER}"
+        PORT = "3000"
     }
 
-
     stages {
-
 
         stage('SCM Checkout') {
             steps {
@@ -20,11 +17,10 @@ pipeline {
             }
         }
 
-
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo "Installing Node dependencies"
+                    echo "Installing dependencies..."
 
                     node -v
                     npm -v
@@ -34,24 +30,20 @@ pipeline {
             }
         }
 
-
         stage('Run Tests') {
             steps {
                 sh '''
-                    echo "Running application tests"
+                    echo "Running tests..."
 
                     npm test
                 '''
             }
         }
 
-
-        stage('Docker Build') {
-
+        stage('Build Docker Image') {
             steps {
-
                 sh '''
-                    echo "Building Docker image"
+                    echo "Building Docker image..."
 
                     docker build \
                     -t ${IMAGE_NAME}:${IMAGE_TAG} \
@@ -60,149 +52,134 @@ pipeline {
             }
         }
 
-
-
-        stage('Deploy Using Docker Compose') {
-
+        stage('Stop Old Container') {
             steps {
-
                 sh '''
-		    docker stop task-tracker-container || true
+                    echo "Removing old container if exists..."
 
-                    docker rm task-tracker-container || true
-
-                    echo "Stopping previous deployment"
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm ${CONTAINER_NAME} || true
 
                     docker compose down || true
+                '''
+            }
+        }
 
-
-                    echo "Starting application"
+        stage('Deploy Application') {
+            steps {
+                sh '''
+                    echo "Deploying application..."
 
                     docker compose up -d --build
-
                 '''
             }
         }
-
-
 
         stage('Wait For Application') {
-
             steps {
-
                 sh '''
+                    echo "Waiting for application..."
 
-                echo "Waiting for application readiness"
+                    i=1
 
+                    while [ $i -le 30 ]
+                    do
 
-                for i in {1..30}
-                do
+                        if docker exec ${CONTAINER_NAME} wget -qO- http://localhost:3000/health > /dev/null 2>&1
+                        then
+                            echo "Application Started Successfully"
+                            exit 0
+                        fi
 
-                    if curl -f http://localhost:${PORT}/health
-                    then
+                        echo "Attempt $i/30"
 
-                        echo "Application is ready"
-                        exit 0
+                        sleep 5
 
-                    fi
+                        i=$((i+1))
 
+                    done
 
-                    echo "Waiting..."
-                    sleep 5
+                    echo "Application failed to start"
 
-                done
+                    docker logs ${CONTAINER_NAME}
 
-
-                echo "Application failed to start"
-
-                exit 1
-
+                    exit 1
                 '''
             }
         }
-
-
 
         stage('Verify Deployment') {
-
             steps {
-
                 sh '''
+                    echo "==========================="
+                    echo "HOME PAGE"
+                    echo "==========================="
 
-                    echo "Checking application endpoints"
+                    docker exec ${CONTAINER_NAME} \
+                    wget -qO- http://localhost:3000/
 
+                    echo ""
 
-                    echo "Home Endpoint"
+                    echo "==========================="
+                    echo "HEALTH ENDPOINT"
+                    echo "==========================="
 
-                    curl http://localhost:${PORT}/
+                    docker exec ${CONTAINER_NAME} \
+                    wget -qO- http://localhost:3000/health
 
+                    echo ""
 
-                    echo "Health Endpoint"
+                    echo "==========================="
+                    echo "TASKS API"
+                    echo "==========================="
 
-                    curl http://localhost:${PORT}/health
+                    docker exec ${CONTAINER_NAME} \
+                    wget -qO- http://localhost:3000/api/tasks
 
+                    echo ""
 
-                    echo "Tasks API Endpoint"
-
-                    curl http://localhost:${PORT}/api/tasks
-
-
-                    echo "Deployment successful"
-
+                    echo "Deployment Verified Successfully"
                 '''
             }
         }
 
-
     }
-
-
 
     post {
 
-
         success {
 
-            echo "================================="
+            echo "======================================"
             echo "BUILD SUCCESSFUL"
             echo "Application deployed successfully"
-            echo "================================="
+            echo "======================================"
 
+            sh '''
+                docker ps
+            '''
         }
-
-
 
         failure {
 
-            echo "================================="
+            echo "======================================"
             echo "BUILD FAILED"
-            echo "Cleaning resources"
-            echo "================================="
-
+            echo "Container Logs"
+            echo "======================================"
 
             sh '''
+                docker ps -a
 
-            docker compose down || true
-
+                docker logs ${CONTAINER_NAME} || true
             '''
-
         }
-
-
 
         always {
 
-            echo "Cleaning unused Docker resources"
-
+            echo "Cleaning unused Docker images..."
 
             sh '''
-
-            docker image prune -f || true
-
+                docker image prune -f || true
             '''
-
         }
-
     }
-
 }
