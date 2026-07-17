@@ -67,6 +67,9 @@ pipeline {
             steps {
 
                 sh '''
+		    docker stop task-tracker-container || true
+
+                    docker rm task-tracker-container || true
 
                     echo "Stopping previous deployment"
 

@@ -5,7 +5,6 @@ services:
     image: task-tracker-app:latest
 
     container_name: task-tracker-container
-
     build:
       context: .
 
