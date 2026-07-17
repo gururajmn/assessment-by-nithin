@@ -1,80 +1,69 @@
-STRICTLY NO USAGE OF AI
+# Assessment by Nithin
 
-Assignment: DevOps Pipeline for a Task Tracker App
-Objective
-Your assignment is to build out the DevOps CI/CD pipeline and containerization strategy for this Node.js Task Tracker application. We have removed all DevOps-related artifacts, so you will need to create them from scratch.
+## Task Tracker Application
 
-Assignment Details
-1. Docker Requirements
-You must write a Dockerfile with the following requirements:
+### Objective
 
-Use a multi-stage build to optimize the image size.
+Build a complete DevOps CI/CD pipeline for the Task Tracker Node.js application using Docker, Docker Compose, and Jenkins.
 
-Incorporate basic Docker security features (e.g., using a non-root user, minimal base image like alpine, running as a non-root user).
+## Requirements
 
-2. Docker Compose Requirements
-You must write a docker-compose.yml file to spin up the application easily using docker-compose up.
+### Docker
 
-3. Jenkins Pipeline Requirements
-You must write a Jenkinsfile for the CI/CD pipeline. The pipeline should include:
+- Multi-stage Docker build
+- Minimal base image (Alpine)
+- Run application as a non-root user
 
-Usage of the environment block to define variables.
+### Docker Compose
 
-The following stages:
+- Create a docker-compose.yml file
+- Application should start using:
 
-SCM Pull: Checkout the code from your repository.
+```bash
+docker compose up -d
+```
 
-Install Dependencies and Run Tests: Run npm install and npm test.
+### Jenkins Pipeline
 
-Build: Build the multi-stage Docker image.
+Pipeline stages:
 
-Deploy: Run the application using Docker Compose.
+- Checkout Source Code
+- Install Dependencies
+- Run Tests
+- Build Docker Image
+- Deploy using Docker Compose
+- Verify deployment using curl
 
-Curl: Verify the deployment by sending a curl request to the health endpoint.
+### Endpoints
 
+- http://localhost:3000/
+- http://localhost:3000/health
+- http://localhost:3000/api/tasks
 
-4. Deployment Expected Output
-Your deployment verification should show the output of all 3 application endpoints:
+## Technologies
 
-http://localhost:3000/
+- Node.js
+- Express.js
+- Docker
+- Docker Compose
+- Jenkins
 
-http://localhost:3000/health
+## Run Locally
 
-http://localhost:3000/api/tasks
+```bash
+npm install
+npm start
+```
 
-Submission
-The URL to your GitHub repository containing the source code along with your new Dockerfile, docker-compose.yml, and Jenkinsfile.
+## Run with Docker
 
-Running deployment.
+```bash
+docker build -t task-tracker-app .
+docker run -d -p 3000:3000 task-tracker-app
+```
 
-Important Notes
-The deployment must be running and accessible after the pipeline completes.
+## Run with Docker Compose
 
-Older builds and dangling resources must be cleaned up at the end of the pipeline.
-
-Include caching in Docker builds to optimize performance.
-
-Include post notifications in Jenkins (e.g., Slack, email) for build status.
-
-Use a private Docker registry for storing and deploying images.
-
-Use a private Github registry for code store and connect to jenkins.
-
-Implement rollback support by redeploying the previous successful image tag on failure.
-
-Include build number in the image tag for traceability.
-
-Use readiness wait logic instead of fixed sleep before verifying endpoints.
-
-Required Jenkins Plugins
-Candidates should ensure the following Jenkins plugins are available:
-
-Docker Pipeline
-
-Slack Notification (or equivalent for post notifications)
-
-Workspace Cleanup
-
-Stage View
-
-NodeJs Plugin (for npm commands in pipeline)
+```bash
+docker compose up -d
+```
