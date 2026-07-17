@@ -1,18 +1,15 @@
-version: "3.8"
-
 services:
-  task-tracker:
-    container_name: task-tracker-container
-    build:
-      context: .
-      dockerfile: Dockerfile
+
+  task-tracker-app:
 
     image: task-tracker-app:latest
+
+    container_name: task-tracker-container
+
+    build:
+      context: .
 
     ports:
       - "3000:3000"
 
-    environment:
-      NODE_ENV: production
-
-    restart: unless-stopped
+    restart: always
